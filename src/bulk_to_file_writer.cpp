@@ -10,7 +10,7 @@
 
 BulkToFileWriter::BulkToFileWriter(std::shared_ptr<CommandCollector> cc)
 {
-	cc->subscribe(this);
+	//cc->subscribe(this);
 }
 
 void BulkToFileWriter::update(const Bulk &receivedBulk)

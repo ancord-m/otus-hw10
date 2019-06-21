@@ -5,6 +5,8 @@
 #include <condition_variable>
 #include <atomic>
 
+#include "aliases.h"
+
 #include "command_collector.h"
 #include "console_printer.h"
 #include "bulk_to_file_writer.h"
@@ -14,7 +16,7 @@ using namespace std::chrono_literals;
 bool data_ready(false);
 std::atomic<bool> stop(false);
 std::mutex mtx;
-std::condition_variable cv, cv_stop;
+std::condition_variable cv;
 
 void foo(void)
 {
@@ -30,19 +32,51 @@ void foo(void)
 			data_ready = false;
 			++counter;
 		}	
-		lk.unlock();
+	//	lk.unlock();
 		
 		if(counter == 10)
 		{
 			stop = true;
-			cv_stop.notify_one();
+			
 		}
 	}
 }
 
+
+/*
+Набросок архитектуры:
+- потоки логгера и записи в файл спят, ждут события
+- главный поток быстро или не очень формирует бульку.
+- главный поток кладет бульку в хранилище булек - в очередь
+- есть булька-буффер, в которую складываются бульки из хранилища
+- если другие потоки выставили флаги "прочитано"&&"записано", то бульку-буффер обновляет очередное значение из хранилища
+  то есть очередь освобождается
+- как только обновили буфер - шлем notify_all
+- здесь будет работать RWLock скорее всего
+- все потоки поработали с буффером и выставили свои флаги.
+*/
+
 int main(int argc, char const *argv[])
 {
+	int bulkCapacity = 3;
+	auto bulk_storage = std::make_shared<BulkStorage>();
+	Bulk ready_for_output_bulk;
+
+	if(argc == 2)
+	{
+		bulkCapacity = std::atoi(argv[1]);
+	}
+
+	CommandCollector commandCollector(bulk_storage, bulkCapacity);
+
+	for(std::string line; std::getline(std::cin, line); ) 
+	{
+		commandCollector.captureCommandAndPerformAnalysis(line);	
+	}
 	
+	//std::thread console_printer_thread(&ConsolePrinter::test, ConsolePrinter());
+
+	/*
 	std::thread console_printer_thread(foo);
 
 	while(true && !stop.load())
@@ -57,13 +91,13 @@ int main(int argc, char const *argv[])
 		cv.notify_one();
 
 		{
-			std::unique_lock<std::mutex> lk(mtx);
-			cv_stop.wait_for(lk, 200ms, [] { return stop.load(); });	
+			std::lock_guard<std::mutex> lk(mtx);
+			if(stop.load()) break;
 		}		
-	}
+	}*/
 
 
-	console_printer_thread.join();
+	//console_printer_thread.join();
 
 	/*
 	int bulkCapacity = 3;

@@ -6,10 +6,10 @@ void CommandCollector::captureCommandAndPerformAnalysis(std::string command)
 {
 	if(isThisOpenningCurlyBrace(command))
 	{
-		tryToNotifyListenersWithLeftFinishedOrUnfinishedCurrentBulk();
+		tryToInterruptAndSaveCurrentBulk();
 
 		openCurlyBrace();
-		bulkFormedDynamicly(true);
+		setCurrentBulkFormedDynamicly(true);
 	}
 	else if(isThisClosingCurlyBrace(command))
 	{
@@ -20,42 +20,58 @@ void CommandCollector::captureCommandAndPerformAnalysis(std::string command)
 		storeCommandIntoCurrentBulk(command);
 	}
 
-	if(doesBulkFormedDynamicly())
+	if(doesCurrentBulkFormedDynamicly())
 	{
-		notify_IfAllCurlyBracesAreClosed();
+		saveCurrentBulk_IfAllCurlyBracesAreClosed();
 	}
 	else
 	{
-		notify_IfCommandBlockSizeIsReached();
+		saveCurrentBulk_IfCommandBlockSizeIsReached();
 	}
 
-	if(wereListenersNotified())
+	if(wasCurrentBulkSavedInStorage())
 	{
 		prepareCurrentBulkForNewCommands();	
-		setListenersWereNotified(false);
+		setCurrentBulkWasSavedInStorage(false);
 	}
 }
 
-void CommandCollector::tryToNotifyListenersWithLeftFinishedOrUnfinishedCurrentBulk(void)
+/* Internal functions */
+
+void CommandCollector::storeCommandIntoCurrentBulk(String command)
 {
-	if(!isCurrentBulkEmpty() && !doesBulkFormedDynamicly())
+	currentBulk.push_back(command);
+}
+
+void CommandCollector::saveCurrentBulkInStorage(void)
+{
+	externalStorage->push(currentBulk);
+	setCurrentBulkWasSavedInStorage(true);
+}
+
+void CommandCollector::saveCurrentBulk_IfCommandBlockSizeIsReached(void)
+{
+	if(currentBulk.size() == commandBlockSize)
 	{
-		notify_ForciblyTerminateCollectionAndNotify();
+		saveCurrentBulkInStorage();	
 	}
 }
 
-void CommandCollector::subscribe(iBulkUpdater *listener)
+void CommandCollector::saveCurrentBulk_IfAllCurlyBracesAreClosed(void)
 {
-	listeners.push_back(listener);
+	if(0 == braceCounter)
+	{
+		setCurrentBulkFormedDynamicly(false);
+		saveCurrentBulkInStorage();
+	}
 }
 
-void CommandCollector::notify(void)
+void CommandCollector::tryToInterruptAndSaveCurrentBulk(void)
 {
-	for(auto l : listeners) {
-		l->update(currentBulk);
+	if(!isCurrentBulkEmpty() && !doesCurrentBulkFormedDynamicly())
+	{
+		saveCurrentBulkInStorage();
 	}
-
-	setListenersWereNotified(true);
 }
 
 bool CommandCollector::isThisOpenningCurlyBrace(String &command)
@@ -68,11 +84,6 @@ bool CommandCollector::isThisClosingCurlyBrace(String &command)
 	return ( 0 == command.compare("}") );
 }
 
-void CommandCollector::storeCommandIntoCurrentBulk(String command)
-{
-	currentBulk.push_back(command);
-}
-
 void CommandCollector::openCurlyBrace(void)
 {
 	++braceCounter;
@@ -83,31 +94,14 @@ void CommandCollector::closeCurlyBrace(void)
 	--braceCounter;
 }
 
-void CommandCollector::bulkFormedDynamicly(bool v)
+void CommandCollector::setCurrentBulkFormedDynamicly(bool v)
 {
 	formingCurrentBulkDynamicly = v;
 }
 
-bool CommandCollector::doesBulkFormedDynamicly(void)
+bool CommandCollector::doesCurrentBulkFormedDynamicly(void)
 {
 	return formingCurrentBulkDynamicly;
-}
-
-void CommandCollector::notify_IfAllCurlyBracesAreClosed(void)
-{
-	if(0 == braceCounter)
-	{
-		bulkFormedDynamicly(false);
-		notify();
-	} 
-}
-
-void CommandCollector::notify_IfCommandBlockSizeIsReached(void)
-{
-	if(currentBulk.size() == commandBlockSize)
-	{
-		notify();	
-	}
 }
 
 bool CommandCollector::isCurrentBulkEmpty(void)
@@ -115,22 +109,17 @@ bool CommandCollector::isCurrentBulkEmpty(void)
 	return currentBulk.empty();
 }
 
-void CommandCollector::notify_ForciblyTerminateCollectionAndNotify(void)
+void CommandCollector::setCurrentBulkWasSavedInStorage(bool v)
 {
-	notify();
+	currentBulkWasSaved = v;
+}
+
+bool CommandCollector::wasCurrentBulkSavedInStorage(void)
+{
+	return currentBulkWasSaved;
 }
 
 void CommandCollector::prepareCurrentBulkForNewCommands(void)
 {
 	currentBulk.clear();
-}
-
-void CommandCollector::setListenersWereNotified(bool v)
-{
-	listenersWereNotified = v;
-}
-
-bool CommandCollector::wereListenersNotified(void)
-{
-	return listenersWereNotified;
 }
