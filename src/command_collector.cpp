@@ -36,6 +36,16 @@ void CommandCollector::captureCommandAndPerformAnalysis(std::string command)
 	}
 }
 
+Bulk CommandCollector::getNextBulk(void)
+{
+	Bulk result;
+
+	result = externalStorage->front();
+	externalStorage->pop();
+
+	return result;
+}
+
 /* Internal functions */
 
 void CommandCollector::storeCommandIntoCurrentBulk(String command)

@@ -46,12 +46,12 @@ void foo(void)
 /*
 Набросок архитектуры:
 - потоки логгера и записи в файл спят, ждут события
-- главный поток быстро или не очень формирует бульку.
-- главный поток кладет бульку в хранилище булек - в очередь
-- есть булька-буффер, в которую складываются бульки из хранилища
++ главный поток быстро или не очень формирует бульку.
++ главный поток кладет бульку в хранилище булек - в очередь
++ есть булька-буффер, в которую складываются бульки из хранилища
 - если другие потоки выставили флаги "прочитано"&&"записано", то бульку-буффер обновляет очередное значение из хранилища
   то есть очередь освобождается
-- как только обновили буфер - шлем notify_all
++ как только обновили буфер - шлем notify_all
 - здесь будет работать RWLock скорее всего
 - все потоки поработали с буффером и выставили свои флаги.
 */
@@ -60,7 +60,9 @@ int main(int argc, char const *argv[])
 {
 	int bulkCapacity = 3;
 	auto bulk_storage = std::make_shared<BulkStorage>();
-	Bulk ready_for_output_bulk;
+	auto ready_for_output_bulk = std::make_shared<Bulk>();
+	auto bulk_mutex = std::make_shared<Mutex>();
+	auto bulk_updated = std::make_shared<ConditionVariable>();
 
 	if(argc == 2)
 	{
@@ -68,11 +70,27 @@ int main(int argc, char const *argv[])
 	}
 
 	CommandCollector commandCollector(bulk_storage, bulkCapacity);
+	std::thread console_printer_thread(&ConsolePrinter::update, ConsolePrinter(ready_for_output_bulk, bulk_mutex, bulk_updated));
 
 	for(std::string line; std::getline(std::cin, line); ) 
 	{
-		commandCollector.captureCommandAndPerformAnalysis(line);	
+		commandCollector.captureCommandAndPerformAnalysis(line);
+
+		if(!bulk_storage->empty())
+		{
+			{
+				std::lock_guard<Mutex> lk(*bulk_mutex);
+				*ready_for_output_bulk = commandCollector.getNextBulk();
+				//todo: set bool flags have_written/have_printed
+			}
+
+			(*bulk_updated).notify_all();
+		}
 	}
+
+	//fixme: commandCollector.tryToInterruptAndSaveCurrentBulk(); ????
+
+
 	
 	//std::thread console_printer_thread(&ConsolePrinter::test, ConsolePrinter());
 

@@ -1,17 +1,16 @@
 #include "console_printer.h"
 
-ConsolePrinter::ConsolePrinter(std::shared_ptr<CommandCollector> cc)
+ConsolePrinter::ConsolePrinter(std::shared_ptr<Bulk> bulk, std::shared_ptr<Mutex> mtx, std::shared_ptr<ConditionVariable> cv)
 {
-//	cc->subscribe(this);
+	bulk_to_be_printed = bulk;
+	bulk_mtx = mtx;
+	bulk_updated = cv;
 }
 
-void ConsolePrinter::update(const Bulk &receivedBulk)
+void ConsolePrinter::update(void)
 {
-	std::cout << generateResultingBulkString(receivedBulk);
+	std::unique_lock<Mutex> lk(*bulk_mtx);
+	(*bulk_updated).wait(lk);
+	std::cout << generateResultingBulkString(*bulk_to_be_printed);
 	std::cout << std::endl;
-}
-
-void ConsolePrinter::test(void)
-{
-	std::cout << "Testing..." << std::endl;
 }

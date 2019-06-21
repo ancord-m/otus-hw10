@@ -23,6 +23,7 @@ class CommandCollector
 	   ~CommandCollector() = default;	
 
 		void captureCommandAndPerformAnalysis(std::string command);
+		Bulk getNextBulk(void);
 		
 	private:
 		std::shared_ptr<BulkStorage> externalStorage;
