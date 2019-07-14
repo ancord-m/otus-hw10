@@ -4,6 +4,8 @@ set(ENV{TRAVIS_BUILD_NUMBER} 1)
 
 project(bulkmt VERSION 0.0.$ENV{TRAVIS_BUILD_NUMBER})
 
+find_package(Threads)
+
 set(INCLUDE_DIR include)
 
 set(SRC_DIR src)
@@ -23,6 +25,8 @@ set_target_properties(bulkmt PROPERTIES
 )
 
 target_include_directories(bulkmt PRIVATE ${INCLUDE_DIR})
+
+target_link_libraries(bulkmt ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS bulkmt RUNTIME DESTINATION bin)
 
