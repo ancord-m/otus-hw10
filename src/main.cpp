@@ -17,7 +17,7 @@ int main(int argc, char const *argv[])
 	auto commandCollector = std::make_shared<CommandCollector>(bulkCapacity);
 
 	ConsolePrinter consolePrinter(commandCollector);
-	BulkToFileWriter bulkFileWriter(commandCollector);
+//	BulkToFileWriter bulkFileWriter(commandCollector);
 	
 	for(std::string line; std::getline(std::cin, line); ) 
 	{

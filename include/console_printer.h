@@ -3,6 +3,11 @@
 
 #include <iostream>
 #include <memory>
+#include <queue>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+
 
 #include "aliases.h"
 #include "ibulk_updater.h"
@@ -17,6 +22,14 @@ class ConsolePrinter : public iBulkUpdater, public ResultingBulkFormatter
 	   ~ConsolePrinter() = default;	
 
 		void update(const Bulk &receivedBulk) override;
+
+		void print(void);
+
+	private:
+		std::queue<Bulk> bulkStorage;
+		std::mutex bulkStorageMutex;
+		std::condition_variable cv;
+		std::thread print_thread;
 };
 
 #endif
