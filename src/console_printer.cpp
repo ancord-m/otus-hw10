@@ -9,10 +9,6 @@ ConsolePrinter::ConsolePrinter(std::shared_ptr<CommandCollector> cc)
 
 ConsolePrinter::~ConsolePrinter()
 {
-	{
-		std::lock_guard<std::mutex> lk(bulkStorageMutex);
-		std::cout << bulkStorage.size() << std::endl;
-	}
 	print_thread.join();
 }
 
@@ -26,8 +22,7 @@ void ConsolePrinter::update(const Bulk &receivedBulk)
 void ConsolePrinter::stop(void)
 {
 	stop_thread.store(true);
-	cv.notify_one();
-	std::cout << "STOP" << std::endl;
+	cv.notify_all();
 }
 
 void ConsolePrinter::print(void)
@@ -40,19 +35,11 @@ void ConsolePrinter::print(void)
 		std::unique_lock<std::mutex> lk(bulkStorageMutex);		
 		cv.wait(lk, [&] { return !bulkStorage.empty() ||  stop_thread.load(); } );
 
-		if(!bulkStorage.empty())
-		{
-			bulk = bulkStorage.front();
-			bulkStorage.pop();
-		}
+		bulk = bulkStorage.front();
+		bulkStorage.pop();
 		queue_is_empty = bulkStorage.empty();
 		lk.unlock();
 
 		std::cout << generateResultingBulkString(bulk) << std::endl;
-	}
-
-	{
-		std::lock_guard<std::mutex> lk(bulkStorageMutex);
-		std::cout << bulkStorage.size() << std::endl;
 	}
 }

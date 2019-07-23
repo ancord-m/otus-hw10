@@ -11,16 +11,25 @@
 
 class BulkToFileWriter : public iBulkUpdater, public ResultingBulkFormatter
 {
-	const std::string prefix    = "bulk";
-	const std::string extention = ".log";
-
-	String generateFileName(void);
-
 	public:
-		BulkToFileWriter(std::shared_ptr<CommandCollector>);
-	   ~BulkToFileWriter() = default; 
+		BulkToFileWriter(std::shared_ptr<CommandCollector>, int number_of_threads);
+	   ~BulkToFileWriter(); 
 
 	   void update(const Bulk &) override;
+	   void stop(void) override;
+
+	   void write(void);
+
+	private:
+		const String prefix    = "bulk";
+		const String extention = ".log";
+
+		String generateFileName(void);
+   		Queue<Bulk> bulkStorage;
+		Mutex bulkStorageMutex;
+		ConditionVariable cv;
+		Thread write_thread;
+		Atomic<bool> stop_thread;
 };
 
 #endif

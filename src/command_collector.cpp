@@ -51,7 +51,8 @@ void CommandCollector::subscribe(iBulkUpdater *listener)
 
 void CommandCollector::notify(void)
 {
-	for(auto l : listeners) {
+	for(auto l : listeners)
+	{
 		l->update(currentBulk);
 	}
 
@@ -60,7 +61,6 @@ void CommandCollector::notify(void)
 
 void CommandCollector::stopAuxThreads(void)
 {
-	std::cout << "Stopping" << std::endl;
 	for(auto l : listeners)
 	{
 		l->stop();

@@ -8,37 +8,55 @@
 #include "resulting_bulk_formatter.h"
 
 
-BulkToFileWriter::BulkToFileWriter(std::shared_ptr<CommandCollector> cc)
+BulkToFileWriter::BulkToFileWriter(std::shared_ptr<CommandCollector> cc, int number_of_threads)
 {
+	stop_thread.store(false);
 	cc->subscribe(this);
+	write_thread = std::thread(&BulkToFileWriter::write, this);
+}
+
+BulkToFileWriter::~BulkToFileWriter()
+{
+	write_thread.join();
 }
 
 void BulkToFileWriter::update(const Bulk &receivedBulk)
 {
+	std::lock_guard<std::mutex> lk(bulkStorageMutex);
+	bulkStorage.push(receivedBulk);
+	cv.notify_one();
+}
+
+void BulkToFileWriter::stop(void)
+{
+	stop_thread.store(true);
+	cv.notify_all();
+}
+
+void BulkToFileWriter::write(void)
+{	
+	bool queue_is_empty = false;
+	Bulk bulk;
 	std::ofstream output;
 
-	output.open(generateFileName());
-
-	if(output.is_open())
+	while(!(stop_thread.load() and queue_is_empty))
 	{
-		output << generateResultingBulkString(receivedBulk);
-	}
+		std::unique_lock<std::mutex> lk(bulkStorageMutex);		
+		cv.wait(lk, [&] { return !bulkStorage.empty() ||  stop_thread.load(); } );
 
-	output.close();
+		bulk = bulkStorage.front();
+		bulkStorage.pop();
+		queue_is_empty = bulkStorage.empty();
+		lk.unlock();
 
-	/*
-	В логике данной функции существенная ошибка. Если ее вызывать "неспеша", под отладчиком,
-	или в ручном режиме подавая данные на стандартный ввод, то она прекрасно отрабатывает
-	и каждый bulk пишет в свой log файл. Однако, если запустить seq 0 9 | ./bulk, т.е быстро
-	подать кучу данных на вход, запись в файлы работает некорретко. Пишется самый последний 
-	log файл. В лучшем случае, парачка промежуточных появится.
-	Не помогает даже задержка потока, хотя я сомневаюсь, что на диск что-то таак долго может писаться.
-	Нужна Ваша помощь, Дмитрий.
-	*/
+		output.open(generateFileName());
+		if(output.is_open())
+		{
+			output << generateResultingBulkString(bulk);
+		}
 
-	std::chrono::milliseconds delay(100);
-
-	std::this_thread::sleep_for(delay);
+		output.close();
+	}	
 }
 
 String BulkToFileWriter::generateFileName(void)
