@@ -58,6 +58,15 @@ void CommandCollector::notify(void)
 	setListenersWereNotified(true);
 }
 
+void CommandCollector::stopAuxThreads(void)
+{
+	std::cout << "Stopping" << std::endl;
+	for(auto l : listeners)
+	{
+		l->stop();
+	}
+}
+
 bool CommandCollector::isThisOpenningCurlyBrace(String &command)
 {
 	return ( 0 == command.compare("{") );

@@ -7,7 +7,7 @@
 #include <mutex>
 #include <thread>
 #include <condition_variable>
-
+#include <atomic>
 
 #include "aliases.h"
 #include "ibulk_updater.h"
@@ -18,10 +18,10 @@ class ConsolePrinter : public iBulkUpdater, public ResultingBulkFormatter
 {
 	public:
 		ConsolePrinter(std::shared_ptr<CommandCollector>);
-
-	   ~ConsolePrinter() = default;	
+	   ~ConsolePrinter();	
 
 		void update(const Bulk &receivedBulk) override;
+		void stop(void) override;
 
 		void print(void);
 
@@ -30,6 +30,7 @@ class ConsolePrinter : public iBulkUpdater, public ResultingBulkFormatter
 		std::mutex bulkStorageMutex;
 		std::condition_variable cv;
 		std::thread print_thread;
+		std::atomic<bool> stop_thread;
 };
 
 #endif

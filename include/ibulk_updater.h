@@ -5,8 +5,10 @@
 
 class iBulkUpdater {
 public:
-	virtual void update(const Bulk &) = 0;
 	virtual ~iBulkUpdater() {};
+
+	virtual void update(const Bulk &) 	= 0;
+	virtual void stop(void)				= 0;
 };
 
 #endif

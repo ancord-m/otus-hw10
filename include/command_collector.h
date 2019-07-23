@@ -9,6 +9,25 @@
 
 class CommandCollector
 {	
+public:
+	CommandCollector(int bs) :
+		commandBlockSize(bs),
+		braceCounter(0),
+		formingCurrentBulkDynamicly(false),
+		listenersWereNotified(false)
+	{ 
+		currentBulk.reserve(100); 
+	};
+
+   ~CommandCollector() = default;	
+
+	void captureCommandAndPerformAnalysis(std::string command);
+	void tryToNotifyListenersWithLeftFinishedOrUnfinishedCurrentBulk(void);
+	void subscribe(iBulkUpdater *listener);
+	void notify(void);
+	void stopAuxThreads(void);
+	
+private:
 	Bulk currentBulk;
 	int commandBlockSize;
 	
@@ -32,23 +51,6 @@ class CommandCollector
 	void setListenersWereNotified(bool);
 	bool wereListenersNotified(void);
 
-public:
-	CommandCollector(int bs) :
-		commandBlockSize(bs),
-		braceCounter(0),
-		formingCurrentBulkDynamicly(false),
-		listenersWereNotified(false)
-	{ 
-		currentBulk.reserve(100); 
-	};
-
-   ~CommandCollector() = default;	
-
-	void captureCommandAndPerformAnalysis(std::string command);
-	void tryToNotifyListenersWithLeftFinishedOrUnfinishedCurrentBulk(void);
-	void subscribe(iBulkUpdater *listener);
-	void notify(void);
-	
 };
 
 #endif

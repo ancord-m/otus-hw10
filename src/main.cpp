@@ -26,5 +26,7 @@ int main(int argc, char const *argv[])
 
 	commandCollector->tryToNotifyListenersWithLeftFinishedOrUnfinishedCurrentBulk();
 
+	commandCollector->stopAuxThreads();
+
 	return 0;	
 }
