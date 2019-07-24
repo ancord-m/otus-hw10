@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 
+#include "AppTypes.h"
 #include "aliases.h"
 #include "ibulk_updater.h"
 #include "command_collector.h"

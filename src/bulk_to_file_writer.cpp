@@ -3,6 +3,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <sstream>
 
 #include "bulk_to_file_writer.h"
 #include "resulting_bulk_formatter.h"
@@ -49,7 +50,7 @@ void BulkToFileWriter::write(void)
 		queue_is_empty = bulkStorage.empty();
 		lk.unlock();
 
-		output.open(generateFileName());
+		output.open(generateFileName(bulk));
 		if(output.is_open())
 		{
 			output << generateResultingBulkString(bulk);
@@ -59,7 +60,18 @@ void BulkToFileWriter::write(void)
 	}	
 }
 
-String BulkToFileWriter::generateFileName(void)
+String BulkToFileWriter::generateFileName(Bulk bulk)
 {
-	return prefix + std::to_string(time(nullptr)) + extention;
+	return prefix + std::to_string(bulk.creation_time) + "_" + addUniqueSuffix() + std::to_string(std::rand()) + extention;
+}
+
+String BulkToFileWriter::addUniqueSuffix(void)
+{
+	String suffix;
+	std::stringstream sstream;
+
+	sstream << std::hex << std::this_thread::get_id();
+	suffix = sstream.str();
+
+	return suffix;
 }

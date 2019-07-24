@@ -7,10 +7,12 @@
 #include <atomic>
 
 using String 			= std::string;
-using Bulk   			= std::vector<std::string>;
 using Mutex	 			= std::mutex;
 using ConditionVariable = std::condition_variable;
 using Thread 			= std::thread;
+
+template <typename T>
+using vector 			= typename std::vector<T>;
 
 template <typename T>
 using Atomic 			= typename std::atomic<T>;

@@ -1,6 +1,16 @@
 #include <iostream>
+#include <ctime>
 
 #include "command_collector.h"
+
+CommandCollector::CommandCollector(int bs) :
+		commandBlockSize(bs),
+		braceCounter(0),
+		formingCurrentBulkDynamicly(false),
+		listenersWereNotified(false)
+{ 
+		currentBulk.cmd_block.reserve(100); 
+};
 
 void CommandCollector::captureCommandAndPerformAnalysis(std::string command)
 {
@@ -79,7 +89,12 @@ bool CommandCollector::isThisClosingCurlyBrace(String &command)
 
 void CommandCollector::storeCommandIntoCurrentBulk(String command)
 {
-	currentBulk.push_back(command);
+	if(isCurrentBulkEmpty())
+	{
+		currentBulk.creation_time = std::time(nullptr);
+	}
+
+	currentBulk.cmd_block.push_back(command);
 }
 
 void CommandCollector::openCurlyBrace(void)
@@ -113,7 +128,7 @@ void CommandCollector::notify_IfAllCurlyBracesAreClosed(void)
 
 void CommandCollector::notify_IfCommandBlockSizeIsReached(void)
 {
-	if(currentBulk.size() == commandBlockSize)
+	if(currentBulk.cmd_block.size() == commandBlockSize)
 	{
 		notify();	
 	}
@@ -121,7 +136,7 @@ void CommandCollector::notify_IfCommandBlockSizeIsReached(void)
 
 bool CommandCollector::isCurrentBulkEmpty(void)
 {
-	return currentBulk.empty();
+	return currentBulk.cmd_block.empty();
 }
 
 void CommandCollector::notify_ForciblyTerminateCollectionAndNotify(void)
@@ -131,7 +146,7 @@ void CommandCollector::notify_ForciblyTerminateCollectionAndNotify(void)
 
 void CommandCollector::prepareCurrentBulkForNewCommands(void)
 {
-	currentBulk.clear();
+	currentBulk.cmd_block.clear();
 }
 
 void CommandCollector::setListenersWereNotified(bool v)

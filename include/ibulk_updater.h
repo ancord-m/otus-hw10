@@ -1,6 +1,7 @@
 #ifndef IBULK_UPDATER_H
 #define IBULK_UPDATER_H
 
+#include "AppTypes.h"
 #include "aliases.h"
 
 class iBulkUpdater {

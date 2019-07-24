@@ -1,7 +1,7 @@
 #ifndef RESULTING_BULK_FORMATTER_H
 #define RESULTING_BULK_FORMATTER_H
 
-#include "aliases.h"
+#include "AppTypes.h"
 
 class ResultingBulkFormatter
 {
@@ -13,9 +13,9 @@ class ResultingBulkFormatter
 		{
 			String result = "bulk: "; 
 
-			for(auto b_it = bulk.cbegin(); b_it != bulk.cend(); ++b_it)
+			for(auto b_it = bulk.cmd_block.cbegin(); b_it != bulk.cmd_block.cend(); ++b_it)
 			{
-				if(b_it != bulk.cbegin())
+				if(b_it != bulk.cmd_block.cbegin())
 				{
 					result += ", ";
 				}

@@ -10,15 +10,7 @@
 class CommandCollector
 {	
 public:
-	CommandCollector(int bs) :
-		commandBlockSize(bs),
-		braceCounter(0),
-		formingCurrentBulkDynamicly(false),
-		listenersWereNotified(false)
-	{ 
-		currentBulk.reserve(100); 
-	};
-
+	CommandCollector(int bs);
    ~CommandCollector() = default;	
 
 	void captureCommandAndPerformAnalysis(std::string command);

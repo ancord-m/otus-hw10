@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 
+#include "AppTypes.h"
 #include "aliases.h"
 #include "ibulk_updater.h"
 #include "command_collector.h"
@@ -24,7 +25,9 @@ class BulkToFileWriter : public iBulkUpdater, public ResultingBulkFormatter
 		const String prefix    = "bulk";
 		const String extention = ".log";
 
-		String generateFileName(void);
+		String generateFileName(Bulk bulk);
+		String addUniqueSuffix(void);
+
    		Queue<Bulk> bulkStorage;
 		Mutex bulkStorageMutex;
 		ConditionVariable cv;

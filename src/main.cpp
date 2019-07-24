@@ -5,6 +5,13 @@
 #include "console_printer.h"
 #include "bulk_to_file_writer.h"
 
+/*
+- формировать уникальное имя файла
+- запустить несколько файловых потоков
+- запустить метрики
+- исправить время - начальное поставить
+*/
+
 int main(int argc, char const *argv[])
 {
 	int bulkCapacity = 3;
